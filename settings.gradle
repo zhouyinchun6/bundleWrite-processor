@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        maven { url "https://maven.aliyun.com/repository/public" } //jcenter()阿里云代理地址
+        maven { url "https://jitpack.io" }
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://maven.aliyun.com/repository/public" } //jcenter()阿里云代理地址
+        maven { url "https://jitpack.io" }
+    }
+}
+rootProject.name = "BundleProcessorDemo"
+include ':app'
+include ':bundleProcessor'

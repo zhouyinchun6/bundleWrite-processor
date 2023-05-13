@@ -1,0 +1,47 @@
+plugins {
+    id 'java-library'
+//    id 'maven-publish'   //添加maven publish插件，本地编译放开，上传jitPack需注释/**/
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+
+//本地编译放开，上传jitPack需注释
+//在控制台输入如下命令(./gradlew publishToMavenLocal)，本地编译看是否通过：
+//subprojects {
+//    afterEvaluate {
+//        publishing {
+//            publications {
+//                // Creates a Maven publication called "release".
+//                release(MavenPublication) {
+//                    from components.release
+//                    groupId = 'com.github.jitpack'
+//                    artifactId = 'android-example'
+//                    version = '1.0'
+//                }
+//            }
+//        }
+//    }
+//}
+
+
+//注意事项
+/*
+1`官方地址 https://github.com/jitpack/android-example,但是他gradle版本低,好像还未兼容高版本gradle.
+2`上面两如果不注释,发布jitPack会提示ERROR: No build artifacts found.
+3`注释会有警告 Gradle 'publishToMavenLocal' task not found. Please add the 'maven-publish' or 'maven' plugin.但是可以编译成功,现在只有不管,期待后续官方修复
+*/
+
+dependencies {
+    //谷歌提供的自动注册服务
+    //noinspection AnnotationProcessorOnCompilePath
+    implementation 'com.google.auto.service:auto-service:1.0.1'
+    annotationProcessor 'com.google.auto.service:auto-service:1.0.1'
+    //生成java代码库
+    implementation 'com.squareup:javapoet:1.13.0'
+    //依赖上注解module
+    implementation 'com.github.zhouyinchun6:BundleWrite:9.6'
+}
