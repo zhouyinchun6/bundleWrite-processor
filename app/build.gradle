@@ -39,5 +39,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     //apt，导入编译期间生成java代码相关model
-    kapt project(":bundleProcessor")
+//    kapt project(":bundleProcessor")
+    kapt 'com.github.zhouyinchun6:bundleWrite-processor:1.0'
 }
