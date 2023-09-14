@@ -1,0 +1,2 @@
+#incremental.annotation.processors
+com.zyc.bundle.processor.BundleProcessor,aggregating

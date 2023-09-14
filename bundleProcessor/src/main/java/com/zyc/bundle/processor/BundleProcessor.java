@@ -37,6 +37,7 @@ import javax.lang.model.util.Types;
  * <p>
  * description: apt技术，编辑期间生成java代码类获取Bundle参数
  * 参考：https://zhuanlan.zhihu.com/p/343622906；https://blog.csdn.net/qq_26376637/article/details/52374063；
+ * 增量编译：https://blog.csdn.net/qfanmingyiq/article/details/116300913
  */
 @AutoService(Processor.class)
 public class BundleProcessor extends AbstractProcessor { //继承AbstractProcessor
@@ -72,6 +73,7 @@ public class BundleProcessor extends AbstractProcessor { //继承AbstractProcess
         Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(WriteBundle.class);
 
         Map<TypeElement, List<BundleFieldInfo>> cacheMap = new HashMap<>();
+        Map<TypeElement, Element> elementMap = new HashMap<>();
         for (Element element : elements) {
             TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
             List<BundleFieldInfo> fieldList = cacheMap.computeIfAbsent(enclosingElement, k -> new ArrayList<>());
@@ -83,6 +85,7 @@ public class BundleProcessor extends AbstractProcessor { //继承AbstractProcess
             }
             BundleFieldInfo bundleFieldInfo = new BundleFieldInfo(typeMirror, fieldName, bundleName);
             fieldList.add(bundleFieldInfo);
+            elementMap.put(enclosingElement, element);
         }
 
         for (Map.Entry<TypeElement, List<BundleFieldInfo>> entry : cacheMap.entrySet()) {
@@ -100,6 +103,9 @@ public class BundleProcessor extends AbstractProcessor { //继承AbstractProcess
             TypeSpec typeSpec = TypeSpec.classBuilder(classNameStr + "$$BundleInit")
                     .addModifiers(Modifier.PUBLIC)
                     .addMethod(createBundleFun(targetType, bindingList))
+                    //传入一个原始的element 才能变成增量编译,参考 https://blog.csdn.net/qfanmingyiq/article/details/116300913
+                    //不过好像没效果，相关文档较少，但是编译不会再提示未添加增量编译
+                    .addOriginatingElement(elementMap.get(typeElement))
                     .build();
             JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
             try {
