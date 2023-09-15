@@ -73,10 +73,9 @@ public class BundleProcessor extends AbstractProcessor { //继承AbstractProcess
         Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(WriteBundle.class);
 
         Map<TypeElement, List<BundleFieldInfo>> cacheMap = new HashMap<>();
-        Map<TypeElement, Element> elementMap = new HashMap<>();
+        Map<TypeElement, List<Element>> elementMap = new HashMap<>();
         for (Element element : elements) {
             TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
-            List<BundleFieldInfo> fieldList = cacheMap.computeIfAbsent(enclosingElement, k -> new ArrayList<>());
             TypeMirror typeMirror = element.asType();
             String fieldName = element.getSimpleName().toString();
             String bundleName = element.getAnnotation(WriteBundle.class).name();
@@ -84,8 +83,10 @@ public class BundleProcessor extends AbstractProcessor { //继承AbstractProcess
                 bundleName = fieldName;
             }
             BundleFieldInfo bundleFieldInfo = new BundleFieldInfo(typeMirror, fieldName, bundleName);
+            List<BundleFieldInfo> fieldList = cacheMap.computeIfAbsent(enclosingElement, k -> new ArrayList<>());
             fieldList.add(bundleFieldInfo);
-            elementMap.put(enclosingElement, element);
+            List<Element> elementList = elementMap.computeIfAbsent(enclosingElement, k -> new ArrayList<>());
+            elementList.add(element);
         }
 
         for (Map.Entry<TypeElement, List<BundleFieldInfo>> entry : cacheMap.entrySet()) {
@@ -100,14 +101,20 @@ public class BundleProcessor extends AbstractProcessor { //继承AbstractProcess
             ClassName targetType = ClassName.bestGuess(typeElement.getQualifiedName().toString());
 
 
-            TypeSpec typeSpec = TypeSpec.classBuilder(classNameStr + "$$BundleInit")
+            TypeSpec.Builder typeSpecBuilder = TypeSpec.classBuilder(classNameStr + "$$BundleInit")
                     .addModifiers(Modifier.PUBLIC)
-                    .addMethod(createBundleFun(targetType, bindingList))
-                    //传入一个原始的element 才能变成增量编译,参考 https://blog.csdn.net/qfanmingyiq/article/details/116300913
-                    //不过好像没效果，相关文档较少，但是编译不会再提示未添加增量编译
-                    .addOriginatingElement(elementMap.get(typeElement))
-                    .build();
-            JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
+                    .addMethod(createBundleFun(targetType, bindingList));
+
+            //增量编译
+            List<Element> elementList = elementMap.get(typeElement);
+            if (elementList != null && elementList.size() > 0) {
+                for (Element originatingElement : elementList) {
+                    //传入一个原始的element 才能变成增量编译,META-INF/gradle中声明使用isolating（隔离）且速度最快，不用aggregating（聚合），否则会所有文件会全部重新生成
+                    typeSpecBuilder.addOriginatingElement(originatingElement);
+                }
+            }
+
+            JavaFile javaFile = JavaFile.builder(packageName, typeSpecBuilder.build()).build();
             try {
                 javaFile.writeTo(mFiler);
             } catch (IOException e) {
